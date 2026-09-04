@@ -38,7 +38,9 @@ class_id x_center y_center width height
 
 The source Kaggle detection labels may include a sixth plate-text field after the bounding
 box. `01_dataset.ipynb` removes that optional field when creating `dataset_yolo`; the
-original `dataset/` folder is left untouched if it already exists.
+original `dataset/` folder is left untouched if it already exists. If a previous run left
+`dataset_yolo/` incomplete, the notebook detects the missing split, backs up that folder,
+and rebuilds a complete dataset.
 
 The default configuration has one class, `plate`. Update `configs/dataset.yaml` if the
 Drive folder or class list differs.
