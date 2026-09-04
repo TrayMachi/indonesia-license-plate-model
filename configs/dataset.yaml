@@ -1,5 +1,5 @@
 # This path is used by the Colab notebooks after Google Drive is mounted.
-path: /content/drive/MyDrive/indonesia-license-plate-model/dataset
+path: /content/drive/MyDrive/indonesia-license-plate-model/dataset_yolo
 train: images/train
 val: images/val
 test: images/test

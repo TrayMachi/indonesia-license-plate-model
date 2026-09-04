@@ -22,19 +22,23 @@ indonesia-license-plate-model/
 
 ## Dataset format
 
-The notebooks expect YOLO detection labels and a dataset stored in Google Drive:
+The notebooks use detector-compatible YOLO labels and a dataset stored in Google Drive:
 
 ```text
-MyDrive/indonesia-license-plate-model/dataset/
+MyDrive/indonesia-license-plate-model/dataset_yolo/
 ├── images/{train,val,test}/
 └── labels/{train,val,test}/
 ```
 
-Each label file contains one normalized row per plate:
+Each prepared label file contains one normalized row per plate:
 
 ```text
 class_id x_center y_center width height
 ```
+
+The source Kaggle detection labels may include a sixth plate-text field after the bounding
+box. `01_dataset.ipynb` removes that optional field when creating `dataset_yolo`; the
+original `dataset/` folder is left untouched if it already exists.
 
 The default configuration has one class, `plate`. Update `configs/dataset.yaml` if the
 Drive folder or class list differs.
@@ -42,8 +46,8 @@ Drive folder or class list differs.
 ## Colab workflow
 
 1. Open `notebooks/01_dataset.ipynb` from GitHub in Google Colab. It downloads the Kaggle
-   archive, prepares the detection subset, creates a deterministic 80/10/10 split, and
-   validates the data.
+   archive, prepares the detection subset, strips any optional plate-text field, creates a
+   deterministic 80/10/10 split, and validates the data.
 2. Run `notebooks/02_train_detector.ipynb` with a GPU runtime. Checkpoints and metrics are
    saved under `MyDrive/indonesia-license-plate-model/runs/`.
 3. Use `notebooks/03_evaluate.ipynb` to compare validation metrics and inspect predictions.
