@@ -38,7 +38,12 @@ def letterbox(
 
 
 def to_model_input(image_rgb: np.ndarray) -> np.ndarray:
-    """Convert an RGB uint8 image to a float32 NHWC tensor in the [0, 1] range."""
+    """Convert an RGB uint8 image to a float32 NCHW tensor in the [0, 1] range.
+
+    The exported YOLO11 LiteRT model expects a batched channel-first tensor with
+    shape ``[1, 3, height, width]``.
+    """
     if image_rgb.ndim != 3 or image_rgb.shape[2] != 3:
         raise ValueError("image_rgb must have shape (height, width, 3)")
-    return (image_rgb.astype(np.float32) / 255.0)[None, ...]
+    normalized = image_rgb.astype(np.float32) / 255.0
+    return np.transpose(normalized, (2, 0, 1))[None, ...]

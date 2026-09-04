@@ -63,8 +63,9 @@ Drive.
 
 `src/preprocess.py` contains model-input letterboxing helpers. `src/postprocess.py` contains
 format-agnostic box conversion, scaling, and class-wise NMS helpers for the Android inference
-layer. Confirm the exported model's input/output shapes in the export notebook before wiring
-the final tensor adapter into the app.
+layer. For the current YOLO11n LiteRT export, `to_model_input` returns RGB float32 input in
+`[1, 3, 640, 640]` NCHW layout. The model emits raw `[1, 5, 8400]` detections because NMS is
+disabled, so the Android adapter must transpose and decode that output before NMS.
 
 ## Local setup
 
