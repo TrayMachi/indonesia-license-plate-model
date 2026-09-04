@@ -1,0 +1,8 @@
+# This path is used by the Colab notebooks after Google Drive is mounted.
+path: /content/drive/MyDrive/indonesia-license-plate-model/dataset
+train: images/train
+val: images/val
+test: images/test
+
+names:
+  0: plate

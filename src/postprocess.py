@@ -1,0 +1,67 @@
+"""Model-output agnostic detection postprocessing helpers."""
+
+from __future__ import annotations
+
+import numpy as np
+
+
+def xywh_to_xyxy(boxes: np.ndarray) -> np.ndarray:
+    """Convert boxes from center-x, center-y, width, height to corner format."""
+    boxes = np.asarray(boxes, dtype=np.float32)
+    if boxes.shape[-1] != 4:
+        raise ValueError("boxes must have four coordinates")
+    x, y, w, h = np.moveaxis(boxes, -1, 0)
+    return np.stack((x - w / 2, y - h / 2, x + w / 2, y + h / 2), axis=-1)
+
+
+def box_iou(box: np.ndarray, boxes: np.ndarray) -> np.ndarray:
+    """Compute IoU between one xyxy box and an array of xyxy boxes."""
+    inter_left = np.maximum(box[0], boxes[:, 0])
+    inter_top = np.maximum(box[1], boxes[:, 1])
+    inter_right = np.minimum(box[2], boxes[:, 2])
+    inter_bottom = np.minimum(box[3], boxes[:, 3])
+    inter = np.maximum(inter_right - inter_left, 0) * np.maximum(inter_bottom - inter_top, 0)
+    area_box = max(box[2] - box[0], 0) * max(box[3] - box[1], 0)
+    area_boxes = np.maximum(boxes[:, 2] - boxes[:, 0], 0) * np.maximum(boxes[:, 3] - boxes[:, 1], 0)
+    return inter / np.maximum(area_box + area_boxes - inter, 1e-7)
+
+
+def classwise_nms(
+    boxes: np.ndarray,
+    scores: np.ndarray,
+    class_ids: np.ndarray,
+    iou_threshold: float = 0.45,
+) -> np.ndarray:
+    """Return kept indices after greedy NMS, independently for each class."""
+    boxes = np.asarray(boxes, dtype=np.float32)
+    scores = np.asarray(scores, dtype=np.float32)
+    class_ids = np.asarray(class_ids)
+    kept: list[int] = []
+    for class_id in np.unique(class_ids):
+        candidates = np.where(class_ids == class_id)[0]
+        order = candidates[np.argsort(scores[candidates])[::-1]]
+        while order.size:
+            current = int(order[0])
+            kept.append(current)
+            if order.size == 1:
+                break
+            overlaps = box_iou(boxes[current], boxes[order[1:]])
+            order = order[1:][overlaps <= iou_threshold]
+    return np.asarray(kept, dtype=np.int64)
+
+
+def scale_boxes_to_original(
+    boxes: np.ndarray,
+    ratio: float,
+    padding: tuple[float, float],
+    original_shape: tuple[int, int],
+) -> np.ndarray:
+    """Undo letterbox padding and clip xyxy boxes to the original image."""
+    boxes = np.asarray(boxes, dtype=np.float32).copy()
+    pad_x, pad_y = padding
+    boxes[:, [0, 2]] = (boxes[:, [0, 2]] - pad_x) / ratio
+    boxes[:, [1, 3]] = (boxes[:, [1, 3]] - pad_y) / ratio
+    height, width = original_shape
+    boxes[:, [0, 2]] = boxes[:, [0, 2]].clip(0, width)
+    boxes[:, [1, 3]] = boxes[:, [1, 3]].clip(0, height)
+    return boxes
