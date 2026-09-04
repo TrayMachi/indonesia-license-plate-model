@@ -4,3 +4,5 @@ opencv-python-headless>=4.10
 Pillow>=10.0
 PyYAML>=6.0
 matplotlib>=3.8
+requests>=2.31
+tqdm>=4.66

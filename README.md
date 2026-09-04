@@ -41,7 +41,9 @@ Drive folder or class list differs.
 
 ## Colab workflow
 
-1. Open `notebooks/01_dataset.ipynb` from GitHub in Google Colab and validate the data.
+1. Open `notebooks/01_dataset.ipynb` from GitHub in Google Colab. It downloads the Kaggle
+   archive, prepares the detection subset, creates a deterministic 80/10/10 split, and
+   validates the data.
 2. Run `notebooks/02_train_detector.ipynb` with a GPU runtime. Checkpoints and metrics are
    saved under `MyDrive/indonesia-license-plate-model/runs/`.
 3. Use `notebooks/03_evaluate.ipynb` to compare validation metrics and inspect predictions.
@@ -66,3 +68,10 @@ python -m pip install -r requirements.txt
 
 This project intentionally keeps images, labels, checkpoints, and exported binaries out of
 Git; use Google Drive for those artifacts.
+
+## Dataset source
+
+The initial detection dataset is [Indonesian License Plate Dataset on Kaggle](https://www.kaggle.com/datasets/juanthomaswijaya/indonesian-license-plate-dataset),
+version 1. It contains 1,000 full images with YOLO detection labels and a separate cropped
+recognition subset. Kaggle currently lists the license as Unknown, so confirm permission with
+the uploader before commercial use or redistribution.
