@@ -5,6 +5,57 @@ from __future__ import annotations
 import numpy as np
 
 
+def decode_yolo11_output(
+    output: np.ndarray,
+    confidence_threshold: float = 0.25,
+    iou_threshold: float = 0.45,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Decode a raw one-class YOLO11 export and apply class-wise NMS.
+
+    Ultralytics exports this detector with NMS disabled as ``[1, 5, 8400]``:
+    four ``xywh`` box values followed by one class score for each candidate.
+    The decoder also accepts the transposed ``[1, 8400, 5]`` representation.
+
+    Returns ``(boxes_xyxy, scores, class_ids)`` in model-input pixel
+    coordinates. Letterbox reversal is intentionally separate and should be
+    done with :func:`scale_boxes_to_original`.
+    """
+    predictions = np.asarray(output, dtype=np.float32)
+    if predictions.ndim == 3:
+        if predictions.shape[0] != 1:
+            raise ValueError("batched output must contain exactly one image")
+        predictions = predictions[0]
+    if predictions.ndim != 2:
+        raise ValueError("output must have shape [1, 5, anchors] or [1, anchors, 5]")
+
+    if predictions.shape[0] >= 5 and predictions.shape[0] < predictions.shape[1]:
+        predictions = predictions.T
+    if predictions.shape[1] < 5:
+        raise ValueError("output must contain four box values and at least one class score")
+
+    boxes_xywh = predictions[:, :4]
+    class_scores = predictions[:, 4:]
+    scores = class_scores.max(axis=1)
+    class_ids = class_scores.argmax(axis=1).astype(np.int64)
+    finite = np.isfinite(boxes_xywh).all(axis=1) & np.isfinite(scores)
+    keep = finite & (scores >= confidence_threshold)
+    if not np.any(keep):
+        return (
+            np.empty((0, 4), dtype=np.float32),
+            np.empty((0,), dtype=np.float32),
+            np.empty((0,), dtype=np.int64),
+        )
+
+    boxes_xyxy = xywh_to_xyxy(boxes_xywh[keep])
+    kept_indices = classwise_nms(
+        boxes_xyxy,
+        scores[keep],
+        class_ids[keep],
+        iou_threshold=iou_threshold,
+    )
+    return boxes_xyxy[kept_indices], scores[keep][kept_indices], class_ids[keep][kept_indices]
+
+
 def xywh_to_xyxy(boxes: np.ndarray) -> np.ndarray:
     """Convert boxes from center-x, center-y, width, height to corner format."""
     boxes = np.asarray(boxes, dtype=np.float32)
