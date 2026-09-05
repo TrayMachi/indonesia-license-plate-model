@@ -14,7 +14,7 @@ class ToModelInputTest(unittest.TestCase):
 
         self.assertEqual(tensor.shape, (1, 3, 2, 3))
         self.assertEqual(tensor.dtype, np.float32)
-        np.testing.assert_allclose(tensor[0, :, 0, 0], (0, 128, 255), atol=1 / 255)
+        np.testing.assert_allclose(tensor[0, :, 0, 0], (0, 128 / 255, 1), atol=1 / 255)
         self.assertGreaterEqual(tensor.min(), 0.0)
         self.assertLessEqual(tensor.max(), 1.0)
 
