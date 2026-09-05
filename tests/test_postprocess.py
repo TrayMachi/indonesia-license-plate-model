@@ -38,6 +38,18 @@ class DecodeYolo11OutputTest(unittest.TestCase):
         np.testing.assert_allclose(scores, (0.95, 0.85))
         np.testing.assert_array_equal(class_ids, (0, 0))
 
+    def test_scales_normalized_coordinates_to_model_pixels(self):
+        output = np.array(
+            [[[0.5], [0.5], [0.25], [0.25], [0.95]]],
+            dtype=np.float32,
+        )
+
+        boxes, scores, class_ids = decode_yolo11_output(output, input_size=(640, 640))
+
+        np.testing.assert_allclose(boxes, ((240.0, 240.0, 400.0, 400.0),))
+        np.testing.assert_allclose(scores, (0.95,))
+        np.testing.assert_array_equal(class_ids, (0,))
+
 
 if __name__ == "__main__":
     unittest.main()

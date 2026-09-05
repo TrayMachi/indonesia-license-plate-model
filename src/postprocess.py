@@ -9,6 +9,7 @@ def decode_yolo11_output(
     output: np.ndarray,
     confidence_threshold: float = 0.25,
     iou_threshold: float = 0.45,
+    input_size: tuple[int, int] | None = None,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Decode a raw one-class YOLO11 export and apply class-wise NMS.
 
@@ -16,9 +17,11 @@ def decode_yolo11_output(
     four ``xywh`` box values followed by one class score for each candidate.
     The decoder also accepts the transposed ``[1, 8400, 5]`` representation.
 
-    Returns ``(boxes_xyxy, scores, class_ids)`` in model-input pixel
-    coordinates. Letterbox reversal is intentionally separate and should be
-    done with :func:`scale_boxes_to_original`.
+    The exported model used by this project emits normalized ``xywh`` values.
+    Pass ``input_size=(height, width)`` to convert them to model-input pixel
+    coordinates. Leave it as ``None`` when decoding an export that already
+    emits pixel coordinates. Letterbox reversal is intentionally separate and
+    should be done with :func:`scale_boxes_to_original`.
     """
     predictions = np.asarray(output, dtype=np.float32)
     if predictions.ndim == 3:
@@ -34,6 +37,15 @@ def decode_yolo11_output(
         raise ValueError("output must contain four box values and at least one class score")
 
     boxes_xywh = predictions[:, :4]
+    if input_size is not None:
+        if len(input_size) != 2 or any(int(value) <= 0 for value in input_size):
+            raise ValueError("input_size must be a positive (height, width) pair")
+        input_height, input_width = (int(value) for value in input_size)
+        scale = np.array(
+            [input_width, input_height, input_width, input_height],
+            dtype=np.float32,
+        )
+        boxes_xywh = boxes_xywh * scale
     class_scores = predictions[:, 4:]
     scores = class_scores.max(axis=1)
     class_ids = class_scores.argmax(axis=1).astype(np.int64)

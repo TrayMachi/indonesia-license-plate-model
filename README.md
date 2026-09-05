@@ -65,8 +65,9 @@ Drive.
 format-agnostic box conversion, scaling, and class-wise NMS helpers for the Android inference
 layer. For the current YOLO11n LiteRT export, `to_model_input` returns RGB float32 input in
 `[1, 3, 640, 640]` NCHW layout. The model emits raw `[1, 5, 8400]` detections because NMS is
-disabled; `decode_yolo11_output` transposes and decodes that output before NMS. Apply
-`scale_boxes_to_original` after decoding to undo the letterbox padding.
+disabled; its `xywh` coordinates are normalized to `[0, 1]`. Call
+`decode_yolo11_output(raw_output, input_size=(640, 640))` to scale and decode that output
+before NMS. Apply `scale_boxes_to_original` after decoding to undo the letterbox padding.
 
 ## Local setup
 
