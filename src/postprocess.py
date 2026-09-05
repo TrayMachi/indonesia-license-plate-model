@@ -31,7 +31,9 @@ def decode_yolo11_output(
     if predictions.ndim != 2:
         raise ValueError("output must have shape [1, 5, anchors] or [1, anchors, 5]")
 
-    if predictions.shape[0] >= 5 and predictions.shape[0] < predictions.shape[1]:
+    if predictions.shape[1] < 5 or (
+        predictions.shape[0] >= 5 and predictions.shape[0] < predictions.shape[1]
+    ):
         predictions = predictions.T
     if predictions.shape[1] < 5:
         raise ValueError("output must contain four box values and at least one class score")
